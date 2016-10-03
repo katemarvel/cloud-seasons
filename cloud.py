@@ -147,7 +147,9 @@ class CLOUDS():
         return alllats,allcf
         
         
-        
+import seasonal_cycle_utils as sc
+def get_amplitude():
+    pass        
             
             
         
