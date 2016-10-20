@@ -29,5 +29,29 @@ cdms.setNetcdfDeflateLevelFlag(0)
 
 import scipy.stats as stats
 from scipy.interpolate import interp1d
+
+if crunchy:
+    sys.path.append("/work/marvel1/python-utils")
+else:
+    sys.path.append("~/Google Drive/python-utils")
 from Plotting import *
 import CMIP5_tools as cmip5
+
+def historical_rcp85_zonal_mean(x):
+    start = '1900-1-1'
+    stop = '2100-1-1'
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
+    return cdutil.averager(data,axis='x')
+
+def historical_rcp85_mma(variable):
+    prefix = "/work/cmip5/historical-rcp85/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.multimodel_average(direc,variable,func=historical_rcp85_zonal_mean)
+    return mma
+
+
+    
+
+
