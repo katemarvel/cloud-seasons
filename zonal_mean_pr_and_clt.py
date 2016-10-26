@@ -53,5 +53,21 @@ def historical_rcp85_mma(variable):
 
 
     
+def OnePct_zonal_mean(x):
+  
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data = x.regrid(the_grid,regridTool='regrid2')[:140]
+    return cdutil.averager(data,axis='x')
+
+def OnePct_mma(variable):
+    prefix = "/work/cmip5/1pctCO2/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.multimodel_average(direc,variable,func=OnePct_zonal_mean)
+    fw = cdms.open(variable+".1pctCO2.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
 
 

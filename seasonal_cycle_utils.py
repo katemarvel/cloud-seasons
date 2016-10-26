@@ -81,7 +81,7 @@ def get_cycle(tas,period=12,return_complex=False):
     if return_complex:
         return R[i],Im[i]
     else:
-        mag = np.sqrt(R**2+Im**2)
+        mag = 2*np.sqrt(R**2+Im**2)
         phase = np.arctan2(Im,R)
         return mag[i],phase[i]
 
@@ -194,7 +194,7 @@ def subtract_months(P, reference):
         
         
 import sys
-sys.path.append("")
+sys
 from Helper import cdms_clone,get_plottable_time,get_orientation,get_slopes
 
 
@@ -377,7 +377,7 @@ def fast_annual_cycle(X,debug=False,semiann=False,zonal_average=False):
     atts = X.getTime().attributes
     for k in atts:
         setattr(tax,k,atts[k])
-    print "got new time"
+    
     axlist = [tax]+X.getAxisList()[1:]
     R.setAxisList(axlist)
     P.setAxisList(axlist)
