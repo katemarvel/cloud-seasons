@@ -62,9 +62,9 @@ class CLOUDS():
         self.PATMOSX_raw = MV.masked_where(np.isnan(self.PATMOSX_raw),self.PATMOSX_raw)
         cdutil.setTimeBoundsMonthly(self.PATMOSX_raw)
 
-        self.GPCP = cdutil.averager(fgpcp("precip",time=('1979-1-1','2014-12-31'),latitude=(-60,60)),axis='x')
+        self.GPCP = cdutil.averager(fgpcp("precip",time=('1979-1-1','2014-12-31'),latitude=(-90,90)),axis='x')
         cdutil.setTimeBoundsMonthly(self.GPCP)
-        self.CMAP = cdutil.averager(fcmap("precip",time=('1979-1-1','2014-12-31'),latitude=(-60,60)),axis='x')
+        self.CMAP = cdutil.averager(fcmap("precip",time=('1979-1-1','2014-12-31'),latitude=(-90,90)),axis='x')
         self.CMAP.setAxis(0,self.GPCP.getTime())
         cdutil.setTimeBoundsMonthly(self.CMAP)
     def trough_trends(self,dataset,smooth = None):
@@ -697,7 +697,37 @@ def SH_trough(R,value=False):
       test.setAxis(0,R.getTime())
       return test                      
       
-        
+def central_max(R,value=False):
+      nt,nlat = R.shape
+      lat_bounds = (-20,20)
+      test = []
+      climatology = MV.average(R,axis=0)
+      Xclim = climatology(latitude=lat_bounds)
+      clim_max,clim_min,clim_ymax,clim_ymins=pf.find_all_peaks(Xclim,return_maxmin=True)
+      if len(clim_min)>1:
+            clim_min = np.min(clim_min)
+      
+      for i in range(nt):
+            X = R[i](latitude=lat_bounds)
+            if len(np.where(X.mask)[0]) == len(X):
+                  test+=[1.e20]
+                  continue
+            maxes,mins,ymax,ymins=pf.find_all_peaks(X,return_maxmin=True)
+            if len(maxes) == 1:
+                  if value:
+                        test += [ymax[0]]
+                  else:
+                        test+=[ maxes[0]]
+            elif len(mins) >1:
+                  if value:
+                        test += [ymax[np.argmin(np.abs(maxes-clim_max))]]
+                  else:
+                        test+=[maxes[np.argmin(np.abs(maxes-clim_max))]]
+            else:
+                  test+=[1.e20]
+      test = MV.masked_where(np.array(test)>1.e10,test)
+      test.setAxis(0,R.getTime())
+      return test         
 def NH_trough(R,value=False):
       nt,nlat = R.shape
       lat_bounds = (10,40)

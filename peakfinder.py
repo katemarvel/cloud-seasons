@@ -46,7 +46,7 @@ import pickle
 def spatially_smooth(data,sigma=5):
     """Spatially smooth even when spatial data is missing """
     # Convert resolution to grid cells from latitude
-    resolution = np.median(np.diff(data.getLatitude()[:]))
+    resolution = np.abs(np.median(np.diff(data.getLatitude()[:])))
     
     nt = data.shape[0]
     sigma = sigma/resolution

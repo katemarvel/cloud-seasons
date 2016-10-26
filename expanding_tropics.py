@@ -29,6 +29,7 @@ cdms.setNetcdfDeflateLevelFlag(0)
 
 import scipy.stats as stats
 from scipy.interpolate import interp1d
+
 from Plotting import *
 import CMIP5_tools as cmip5
 
@@ -197,7 +198,7 @@ class TropicTracker():
         diffs = np.linspace(0,.6,6)
         ax1 = plt.subplot(111)
         plt.xlim(-.2,3.8)
-        plt.ylim(-60,60)
+        plt.ylim(-50,50)
         seasoncolors = {}
         seasoncolors["JJA"]=cm.Reds(.8)
         seasoncolors["DJF"]=cm.Blues(.8)
@@ -257,31 +258,6 @@ class TropicTracker():
 
         
 
-        
-
-    def get_all_trough_trends(self,smooth=None,value=False):
-        NH = {}
-        SH = {}
-        center = {}
-        datasets = ["ISCCP","ISCCP_raw","PATMOSX","PATMOSX_raw","GPCP","CMAP"]
-        for dataset in datasets:
-            nhtrends,shtrends,centertrends = self.trough_trends(dataset,smooth=smooth,value=value)
-            NH[dataset] = nhtrends
-            SH[dataset] = shtrends
-            center[dataset]=centertrends
-        return NH,SH, center
-    def test_smooth(self):
-        self.NH_nosmooth,self.SH_nosmooth,self.C_nosmooth = self.get_all_trough_trends()
-        self.NH5,self.SH5 = self.get_all_trough_trends(smooth=5)
-       
-
-        
-        self.NH_nosmooth_values,self.SH_nosmooth_values = self.get_all_trough_trends(value=True)
-        self.NH5_values,self.SH5_values = self.get_all_trough_trends(smooth=5,value=True)
-
-
-        
-    
         
         
     def trough_correlations(self,season,smooth = None):
@@ -370,7 +346,7 @@ class TropicTracker():
   
 def SH_trough(R,value=False):
       nt,nlat = R.shape
-      lat_bounds = (-40,-10)
+      lat_bounds = (-50,-10)
       test = []
       climatology = MV.average(R,axis=0)
       Xclim = climatology(latitude=lat_bounds)
@@ -437,7 +413,7 @@ def center_max(R,value=False):
       return test         
 def NH_trough(R,value=False):
       nt,nlat = R.shape
-      lat_bounds = (10,40)
+      lat_bounds = (10,50)
       test = []
       climatology = MV.average(R,axis=0)
       Xclim = climatology(latitude=lat_bounds)
@@ -483,8 +459,219 @@ def latplot_check(c,dataset,smooth=None):
         plt.title(season)
         counter +=1
            
+def write_model_data(smooth=5):
+    direc = "ExpandingTropicIndices/historical-rcp85/"
+    functions = [SH_trough,center_max,NH_trough]
+    fclt = cdms.open("clt_hist85.mma.nc")
+    cltdata = fclt("clt")
+    cdutil.setTimeBoundsMonthly(cltdata)
+    fclt.close()
+    fpr = cdms.open("pr_hist85.mma.nc")
+    prdata = fpr("pr")
+    cdutil.setTimeBoundsMonthly(prdata)
+    fpr.close()
+    
+    for func in functions:
+        latwriteprefix = direc+"Smooth."+str(smooth)+"."+func.__name__+"_lat"
+        valwriteprefix = direc+"Smooth."+str(smooth)+"."+func.__name__+"_value"
+        for season in ["DJF","MAM","JJA","SON"]:
+            latstub = latwriteprefix+"."+season
+            valstub = valwriteprefix+"."+season
+            
+            seasonal_data_pr = getattr(cdutil,season)(prdata,criteriaarg=(1,None))
+            nmod,nt,nlat = seasonal_data_pr.shape
+            indices_pr = MV.zeros((nmod,nt))+1.e20
+            valindices_pr = MV.zeros((nmod,nt))+1.e20
+            
+            for model_i in range(nmod):
+                if (len(np.where(seasonal_data_pr[model_i][1].mask)[0]) == nt):
+                    continue
+                model_data_pr = seasonal_data_pr[model_i]
+                if smooth is not None:
+                    model_data_pr = pf.spatially_smooth(model_data_pr,sigma=smooth)
 
+                indices_pr[model_i] = func(model_data_pr)
+                valindices_pr[model_i] = func(model_data_pr,value=True)
+            indices_pr = MV.masked_where(indices_pr>1.e10,indices_pr)
+            valindices_pr = MV.masked_where(valindices_pr>1.e10,valindices_pr)
+            
+            indices_pr.id = "lat"
+            indices_pr.setAxisList(seasonal_data_pr.getAxisList()[:-1])
+            valindices_pr.id = "pr"
+            valindices_pr.setAxisList(seasonal_data_pr.getAxisList()[:-1])
+            
+            fwrite_pr = cdms.open(latstub+"historical-rcp85.pr.nc","w")
+            fwrite_pr.write(indices_pr)
+            fwrite_pr.close()
 
+            vfwrite_pr = cdms.open(valstub+"historical-rcp85.pr.nc","w")
+            vfwrite_pr.write(valindices_pr)
+            vfwrite_pr.close()
+            ###### CLT ######
+            seasonal_data_clt = getattr(cdutil,season)(cltdata,criteriaarg=(1,None))
+            nmod,nt,nlat = seasonal_data_clt.shape
+            indices_clt = MV.zeros((nmod,nt))+1.e20
+            valindices_clt = MV.zeros((nmod,nt))+1.e20
+            
+            for model_i in range(nmod):
+                if (len(np.where(seasonal_data_clt[model_i][1].mask)[0]) == nt):
+                    continue
+                model_data_clt = seasonal_data_clt[model_i]
+                if smooth is not None:
+                    model_data_clt = pf.spatially_smooth(model_data_clt,sigma=smooth)
+
+                indices_clt[model_i] = func(model_data_clt)
+                valindices_clt[model_i] = func(model_data_clt,value=True)
+            indices_clt = MV.masked_where(indices_clt>1.e10,indices_clt)
+            valindices_clt = MV.masked_where(valindices_clt>1.e10,valindices_clt)
+            
+            indices_clt.id = "lat"
+            indices_clt.setAxisList(seasonal_data_clt.getAxisList()[:-1])
+            valindices_clt.id = "clt"
+            valindices_clt.setAxisList(seasonal_data_clt.getAxisList()[:-1])
+            
+            fwrite_clt = cdms.open(latstub+"historical-rcp85.clt.nc","w")
+            fwrite_clt.write(indices_clt)
+            fwrite_clt.close()
+
+            vfwrite_clt = cdms.open(valstub+"historical-rcp85.clt.nc","w")
+            vfwrite_clt.write(valindices_clt)
+            vfwrite_clt.close()
+            
+
+def check_model(model,season,typ):
+    """ Show the time series and locations of troughs/peak for a given model"""
+    
+    funcs =  ["SH_trough","center_max","NH_trough"]
+    fz = cdms.open(typ+"_hist85.mma.nc")
+    zonal = fz(typ)
+    models = np.array(eval(zonal.getAxis(0).models))
+    i = np.where(models == model)[0][0]
+    modzonal = zonal[i]
+    cdutil.setTimeBoundsMonthly(modzonal)
+    seasonal_data_unsmooth=getattr(cdutil,season)(modzonal,criteriaarg=(1,None))
+    nt,nlat = seasonal_data_unsmooth.shape
+    [lat_plot(seasonal_data_unsmooth[j],color=cm.RdYlBu(j/float(nt))) for j in range(nt)]
+    plt.figure()
+    seasonal_data = modzonal_smooth = pf.spatially_smooth(seasonal_data_unsmooth,sigma=5)
+    
+    
+    
+    ax1 = plt.subplot(221)
+    [lat_plot(seasonal_data[j],color=cm.RdYlBu(j/float(nt))) for j in range(nt)]
+    fz.close()
+  
+    for L in range(3):
+        axn = plt.subplot(2,2,L+2)
+        func = funcs[L]
+        flat = cdms.open("ExpandingTropicIndices/historical-rcp85/Smooth.5."+func+"_lat."+season+"historical-rcp85."+typ+".nc")
+        lats = flat("lat")
+        print lats.shape
+        fval = cdms.open("ExpandingTropicIndices/historical-rcp85/Smooth.5."+func+"_value."+season+"historical-rcp85."+typ+".nc")
+        vals = fval(typ)
+        x = lats[i].asma()
+        y = vals[i].asma()
+        t = cmip5.get_plottable_time(lats[i])
+        axn.plot(t,x)
+        for j in range(nt):
+            ax1.plot([x[j]],[y[j]],"o",color=cm.RdYlBu(j/float(nt)))
+        fval.close()
+        flat.close()
+    
+    
+                        
+def get_mma_array(season,typ,xy="lat"):
+    
+    funcs =  ["SH_trough","center_max","NH_trough"]
+    func = funcs[0]
+    f = cdms.open("ExpandingTropicIndices/historical-rcp85/Smooth.5."+func+"_lat."+season+"historical-rcp85."+typ+".nc")
+    shape = f["lat"].shape
+    f.close()
+    S = MV.zeros(shape+(3,))+1.e20
+    for i in range(3):
+        func = funcs[i]
+        f = cdms.open("ExpandingTropicIndices/historical-rcp85/Smooth.5."+func+"_lat."+season+"historical-rcp85."+typ+".nc")
+        data = f("lat")
+        S[:,:,i]=data
+        modax = data.getAxis(0)
+        tax = data.getTime()
+        f.close()
+    S = MV.masked_where(S>1.e10,S)
+    S.setAxis(0,modax)
+    S.setAxis(1,tax)
+    return S
+def get_seasoncolor(season):
+    seasoncolors = {}
+    seasoncolors["JJA"]=cm.Reds(.8)
+    seasoncolors["DJF"]=cm.Blues(.8)
+    seasoncolors["MAM"]=cm.Greens(.8)
+    seasoncolors["SON"]=cm.Oranges(.5)
+    return seasoncolors[season]
+def plot_time_series(season,typ,anom=True,include_individual=True):
+   
+    S = get_mma_array(season,typ)
+    if anom:
+        S = cmip5.time_anomalies(S,start='1984-1-1',stop='2008-12-31')
+    nmod = S.shape[0]
+    mma = MV.average(S,axis=0)[1:-1]
+    for i in range(3):
+        plt.subplot(1,3,i+1)
+        if include_individual:
+            [time_plot(S[m,:,i],color="k",alpha=.5) for m in range(nmod)]
+        time_plot(mma[:,i],color=get_seasoncolor(season),lw=3)
+    
+    
+def plot_eof(season,typ,**kwargs):
+    S = get_mma_array(season,typ)
+    Sclim = MV.average(MV.average(S(time=('1984-1-1','2008-12-31')),axis=1),axis=0)
+    Sa = cmip5.time_anomalies(S,start='1984-1-1',stop='2008-12-31')
+    mma = MV.average(Sa,axis=0)[1:-1]
+    solver = Eof(mma)
+    plt.subplot(211)
+    fac = cmip5.get_orientation(solver)
+    eof1 = fac*solver.eofs()[0]
+    plt.plot(Sclim.asma(),eof1.asma(),"o-",**kwargs)
+    plt.axhline(0,c="k",ls=":")
+
+    plt.subplot(212)
+    time_plot(fac*solver.pcs()[:,0],**kwargs)
+
+    print solver.varianceFraction()[0]
+    
+def barplot_trends(typ,start='1900-1-1',stop='2100-1-1'):
+    if typ == "pr":
+        negsup = "Driest"
+        possup="Wettest"
+    else:
+        negsup="Clearest"
+        possup = "Cloudiest"
+    
+    ax1 = plt.subplot(313)
+    ax1.set_title("SH "+negsup+" Latitude")
+    ax2 = plt.subplot(312)
+    ax2.set_title(possup+" Latitude")
+    ax3 = plt.subplot(311)
+    ax3.set_title("NH "+negsup+" Latitude")
+    axes = [ax1,ax2,ax3]
+    counter = 0.
+    
+    for season in ["DJF","MAM","JJA","SON"]:
+        
+        S = get_mma_array(season,typ)
+        xbar = np.arange(S.shape[0])+counter
+        for i in range(3):
+            seasonlats = S[:,:,i](time=(start,stop))
+            trends = genutil.statistics.linearregression(seasonlats,axis=1,nointercept=1)*3650
+            axes[i].bar(xbar,trends.asma(),color=get_seasoncolor(season),ec=get_seasoncolor(season),width=.2,label=season)
+        counter += .2
+    ax1.set_xticks(np.arange(S.shape[0])+.4)
+    ax1.set_xticklabels(eval(S.getAxis(0).models),rotation=90)
+    ax2.set_xticks([])
+    ax3.set_xticks([])
+    ax1.legend(loc=0,ncol=4)
+        
+    
+        
 
 
 
