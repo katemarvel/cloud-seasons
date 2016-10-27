@@ -57,7 +57,7 @@ def OnePct_zonal_mean(x):
   
     fgrid = cdms.open("~/precip.mon.mean.nc")
     the_grid = fgrid["precip"].getGrid()
-    data = x.regrid(the_grid,regridTool='regrid2')[:140]
+    data = x.regrid(the_grid,regridTool='regrid2')[:140*12]
     return cdutil.averager(data,axis='x')
 
 def OnePct_mma(variable):
