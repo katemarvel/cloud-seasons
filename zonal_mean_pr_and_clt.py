@@ -58,12 +58,15 @@ def OnePct_zonal_mean(x):
     fgrid = cdms.open("~/precip.mon.mean.nc")
     the_grid = fgrid["precip"].getGrid()
     data = x.regrid(the_grid,regridTool='regrid2')[:140*12]
-    return cdutil.averager(data,axis='x')
+    if len(data.getTime())!= 140*12:
+        return
+    else:
+        return cdutil.averager(data,axis='x')
 
 def OnePct_mma(variable):
     prefix = "/work/cmip5/1pctCO2/atm/mo/"
     direc = prefix+variable+"/"
-    mma = cmip5.multimodel_average(direc,variable,func=OnePct_zonal_mean)
+    mma = cmip5.multimodel_average(direc,variable,func=OnePct_zonal_mean,verbose=True)
     fw = cdms.open(variable+".1pctCO2.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
