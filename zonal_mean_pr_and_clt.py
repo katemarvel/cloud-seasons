@@ -51,6 +51,16 @@ def historical_rcp85_mma(variable):
     mma = cmip5.multimodel_average(direc,variable,func=historical_rcp85_zonal_mean)
     return mma
 
+def historical_rcp85_ensemble(variable):
+    prefix = "/work/cmip5/historical-rcp85/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.get_ensemble(direc,variable,func=historical_rcp85_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"variable+".piControl.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
+
 
     
 def OnePct_zonal_mean(x):
@@ -67,10 +77,36 @@ def OnePct_mma(variable):
     prefix = "/work/cmip5/1pctCO2/atm/mo/"
     direc = prefix+variable+"/"
     mma = cmip5.multimodel_average(direc,variable,func=OnePct_zonal_mean,verbose=True)
-    fw = cdms.open(variable+".1pctCO2.zonalmean.nc","w")
+    fw = cdms.open("ZonalMeanData/"variable+".1pctCO2.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
+
+    
+def piC_zonal_mean(x):
+  
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data = x.regrid(the_grid,regridTool='regrid2')[:250*12]
+    if len(data.getTime())!= 250*12:
+        return
+    else:
+        return cdutil.averager(data,axis='x')
+
+def piControl_ensemble(variable):
+    prefix = "/work/cmip5/piControl/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.get_ensemble(direc,variable,func=piC_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"+variable+".piControl.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
     fw.close()
     return mma
 
 
+
+if __name__ == "__main__":
+    for variable in ["pr","clt"]:
+        piControl_ensemble(variable)
+        historical_rcp85_ensemble(variable)
