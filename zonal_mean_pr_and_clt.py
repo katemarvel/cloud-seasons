@@ -1,3 +1,4 @@
+#!/usr/local/anaconda2/envs/latest/bin/python
 import glob
 import sys
 import cdms2 as cdms
@@ -55,7 +56,7 @@ def historical_rcp85_ensemble(variable):
     prefix = "/work/cmip5/historical-rcp85/atm/mo/"
     direc = prefix+variable+"/"
     mma = cmip5.get_ensemble(direc,variable,func=historical_rcp85_zonal_mean)
-    fw = cdms.open("ZonalMeanData/"variable+".piControl.zonalmean.nc","w")
+    fw = cdms.open("ZonalMeanData/"+variable+".piControl.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
     fw.close()
@@ -77,7 +78,7 @@ def OnePct_mma(variable):
     prefix = "/work/cmip5/1pctCO2/atm/mo/"
     direc = prefix+variable+"/"
     mma = cmip5.multimodel_average(direc,variable,func=OnePct_zonal_mean,verbose=True)
-    fw = cdms.open("ZonalMeanData/"variable+".1pctCO2.zonalmean.nc","w")
+    fw = cdms.open("ZonalMeanData/"+variable+".1pctCO2.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
     fw.close()
