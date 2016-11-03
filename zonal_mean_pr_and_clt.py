@@ -56,7 +56,7 @@ def historical_rcp85_ensemble(variable):
     prefix = "/work/cmip5/historical-rcp85/atm/mo/"
     direc = prefix+variable+"/"
     mma = cmip5.get_ensemble(direc,variable,func=historical_rcp85_zonal_mean)
-    fw = cdms.open("ZonalMeanData/"+variable+".piControl.zonalmean.nc","w")
+    fw = cdms.open("ZonalMeanData/"+variable+".historical_rcp85_ensemble.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
     fw.close()
@@ -99,7 +99,7 @@ def piControl_ensemble(variable):
     prefix = "/work/cmip5/piControl/atm/mo/"
     direc = prefix+variable+"/"
     mma = cmip5.get_ensemble(direc,variable,func=piC_zonal_mean)
-    fw = cdms.open("ZonalMeanData/"+variable+".piControl.zonalmean.nc","w")
+    fw = cdms.open("ZonalMeanData/"+variable+".piControl_ensemble.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
     fw.close()
