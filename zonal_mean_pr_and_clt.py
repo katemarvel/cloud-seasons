@@ -105,9 +105,35 @@ def piControl_ensemble(variable):
     fw.close()
     return mma
 
+def amip_zonal_mean(x):
+    start = '1979-1-1'
+    stop = '2008-12-31'
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
+    return cdutil.averager(data,axis='x')
 
+def amip_mma(variable):
+    prefix = "/work/cmip5/amip/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.multimodel_average(direc,variable,func=amip_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"+variable+".amip_mma.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
+
+def amip_ensemble(variable):
+    prefix = "/work/cmip5/amip/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.get_ensemble(direc,variable,func=amip_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"+variable+".amip_ensemble.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
 
 if __name__ == "__main__":
     for variable in ["pr","clt"]:
         piControl_ensemble(variable)
-        historical_rcp85_ensemble(variable)
+        amip_ensemble(variable)

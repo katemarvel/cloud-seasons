@@ -728,8 +728,10 @@ def projections(season,typ,xy="lat",project_on = "1pctCO2"):
     P.setAxisList(S.getAxisList()[:-1])
     return P
 
-def noise(season,typ,xy='lat'):
-    S = cmip5.time_anomalies(get_mma_array(season,typ,experiment="piControl",xy=xy))
+def noise(season,typ,xy='lat',anom=True):
+    S = get_mma_array(season,typ,experiment="piControl",xy=xy)
+    if anom:
+        S = cmip5.time_anomalies(S)
     tax = S.getTime()
     latax = S.getAxis(-1)
     modax = S.getAxis(0)
@@ -993,6 +995,49 @@ def write_obs():
     f.close()
 
 
+def make_composites(season,typ,xy='lat',flavor='la nina'):
+    Snew = noise(season,typ,xy=xy,anom=False)
+    fssts = cdms.open("piC_SSTS.nc")
+    sst=fssts("sst")
+    cdutil.setTimeBoundsMonthly(sst)
+    djf = cdutil.DJF(sst,criteriaarg=(1,None))
+    if season != "DJF":
+        djf = djf[:,:-1]
+    djfmeans = np.ma.average(djf.asma(),axis=1)
+    djfsig = np.ma.std(djf.asma(),axis=1)
+    if flavor == 'la nina':
+        boundary = (djfmeans-2*djfsig)
+        criterion_for_rejection = djf.asma()>boundary[:,np.newaxis]
+    else:
+        boundary = (djfmeans+2*djfsig)
+        criterion_for_rejection = djf.asma()<boundary[:,np.newaxis]
+        
+    ensomask = np.repeat(criterion_for_rejection[:,:,np.newaxis],3,axis=-1)
+    return MV.average(MV.masked_where(ensomask,Snew),axis=1)
+
+def la_nina_fingerprints_all_four_seasons(typ,xy='lat',flavor='la nina'):
+    seasons = ["DJF","MAM","JJA","SON"]
+    ax = plt.subplot(111)
+    x=0
+    for season in seasons:
+        Snew = noise(season,typ,xy=xy,anom=False)
+        clim = MV.average(Snew,axis=1)
+        clim_mma = MV.average(clim,axis=0)
+        comp = make_composites(season,typ,xy=xy,flavor=flavor)
+        mma = MV.average(comp-clim,axis=0)
+        for j in range(3):
+            y = clim_mma[j]
+            dy = mma[j]*10
+            print y
+            print dy
+            dx=0
+            #plt.arrow(x, y, 0, dy)
+            width=0.2
+            ax.add_patch(patches.Arrow(x,y,dx,dy,width=width,color=get_seasoncolor(season)))
+        x+=1
+    plt.xlim(-1,5)
+    plt.ylim(-30,30)
+        
 def get_composites():
     f = cdms.open("/Users/kmarvel/Google Drive/SEASONAL/ENSO_indices.nc")
     ENSO = f("sst")
