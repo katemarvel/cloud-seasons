@@ -63,7 +63,38 @@ def historical_rcp85_ensemble(variable):
     return mma
 
 
+def clisccp_zonal_mean(x):
+    start = '1980-1-1'
+    stop = '2006-1-1'
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
+    return cdutil.averager(data,axis='x')
+
+
+
+def clisccp_mma():
+    variable="clisccp"
+    prefix = "/work/cmip5/historical/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.multimodel_average(direc,variable,func=clisccp_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"+variable+".clisccp.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
+
+def historical_rcp85_ensemble():
+    variable="clisccp"
+    prefix = "/work/cmip5/historical/atm/mo/"
     
+    direc = prefix+variable+"/"
+    mma = cmip5.get_ensemble(direc,variable,func=clisccp_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"+variable+".clisccp_ensemble.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
 def OnePct_zonal_mean(x):
   
     fgrid = cdms.open("~/precip.mon.mean.nc")
