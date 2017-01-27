@@ -84,7 +84,7 @@ def clisccp_mma():
     fw.close()
     return mma
 
-def historical_rcp85_ensemble():
+def clisccp_ensemble():
     variable="clisccp"
     prefix = "/work/cmip5/historical/atm/mo/"
     
