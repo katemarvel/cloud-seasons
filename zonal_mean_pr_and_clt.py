@@ -63,9 +63,11 @@ def historical_rcp85_ensemble(variable):
     return mma
 
 
-def clisccp_zonal_mean(x):
+def clisccp_zonal_mean(data):
     start = '1980-1-1'
     stop = '2006-1-1'
+    Tot = MV.sum(data,axis=1)
+    x= MV.sum(Tot,axis=1)
     fgrid = cdms.open("~/precip.mon.mean.nc")
     the_grid = fgrid["precip"].getGrid()
     data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
