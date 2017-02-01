@@ -39,7 +39,7 @@ from Plotting import *
 import CMIP5_tools as cmip5
 
 def HadleyCell(VA):
-    if len(VA.getTime())!= 140*12:
+    if len(VA.getTime())< 140*12:
         return
     plev = VA.getLevel()[:]
     plev_units = VA.getLevel().units
