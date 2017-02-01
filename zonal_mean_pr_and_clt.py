@@ -38,6 +38,44 @@ else:
 from Plotting import *
 import CMIP5_tools as cmip5
 
+def HadleyCell(VA):
+    if len(VA.getTime())!= 140*12:
+        return
+    plev = VA.getLevel()[:]
+    plev_units = VA.getLevel().units
+    if plev_units == "Pa":
+        fac = 100
+    else:
+        fac = 1
+    i500 = np.where(plev/100 == 500)[0] #mid troposphere = 500hPa
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data= VA.regrid(the_grid,regridTool='regrid2')[:140*12]
+    VAz = cdutil.averager(data,axis='x')
+    dp = np.diff(plev)
+    dp = np.append(dp,0-plev[-1]) #Top of atmosphere = pressure level 0
+    mass_streamf = MV.array(np.cumsum(VAz*dp[np.newaxis,:,np.newaxis],axis=1))[:,i500,:]
+    mass_streamf.setAxis(0,VAz.getTime())
+    mass_streamf.setAxis(1,VAz.getLatitude())
+    mass_streamf.id = "mass_streamfunction"
+    return mass_streamf
+
+    
+def OnePercentHadleyMMA():
+    prefix = "/work/cmip5/1pctCO2/atm/mo/"
+    direc = prefix+"va/"
+    mma = cmip5.multimodel_average(direc,variable,func=HadleyCell,verbose=True)
+    fw = cdms.open("ZonalMeanData/mass_streamfunction.1pctCO2.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
+
+    
+    
+    
+
+
 def historical_rcp85_zonal_mean(x):
     start = '1900-1-1'
     stop = '2100-1-1'
