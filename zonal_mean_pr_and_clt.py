@@ -64,7 +64,7 @@ def HadleyCell(VA):
 def OnePercentHadleyMMA():
     prefix = "/work/cmip5/1pctCO2/atm/mo/"
     direc = prefix+"va/"
-    mma = cmip5.multimodel_average(direc,variable,func=HadleyCell,verbose=True)
+    mma = cmip5.multimodel_average(direc,"va",func=HadleyCell,verbose=True)
     fw = cdms.open("ZonalMeanData/mass_streamfunction.1pctCO2.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
