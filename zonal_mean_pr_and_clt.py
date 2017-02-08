@@ -84,6 +84,21 @@ def historical_rcp85_zonal_mean(x):
     data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
     return cdutil.averager(data,axis='x')
 
+
+def historical_zonal_mean(x):
+    start = '1860-1-1'
+    stop = '2006-1-1'
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
+    return cdutil.averager(data,axis='x')
+def rcp85_zonal_mean(x):
+    start = '2006-1-1'
+    stop = '2100-1-1'
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
+    return cdutil.averager(data,axis='x')
 def historical_rcp85_mma(variable):
     prefix = "/work/cmip5/historical-rcp85/atm/mo/"
     direc = prefix+variable+"/"
@@ -99,6 +114,51 @@ def historical_rcp85_ensemble(variable):
     fw.write(mma)
     fw.close()
     return mma
+
+def historical_ensemble(variable):
+    prefix = "/work/cmip5/historical/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.get_ensemble(direc,variable,func=historical_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"+variable+".historical.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
+
+def rcp85_ensemble(variable):
+    prefix = "/work/cmip5/rcp85/atm/mo/"
+    direc = prefix+variable+"/"
+    mma = cmip5.get_ensemble(direc,variable,func=rcp85_zonal_mean)
+    fw = cdms.open("ZonalMeanData/"+variable+".rcp85.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma
+
+
+def historicalMisc_ensemble(variable,forcing="AA"):
+    prefix = "/work/cmip5/historicalMisc/atm/mo/"
+    direc = prefix+variable+"/"
+    hm = cmip5.HistoricalMisc()
+    search_strings = getattr(hm,forcing)
+    ens = cmip5.get_ensemble(path,variable,search_string = search_strings[0],func=historical_zonal_mean)
+    models = eval(ens.getAxis(0).models)
+    for i in range(len(hm.AA))[1:]:
+        print hm.AA[i]
+        try:
+            ens_new = cmip5.get_ensemble(path,variable,search_string = search_strings[i],func=historical_zonal_mean)
+        except:
+            continue
+        if ens_new.shape[1:] == ens.shape[1:]:
+            models += eval(ens_new.getAxis(0).models)
+            ens = MV.concatenate([ens,ens_new],axis=0,axisattributes={"models":str(models)})
+        else:
+            print "PROBLEM: SHAPE IS "+str(ens_new.shape)
+    ens.id=variable
+    fw = cdms.open("ZonalMeanData/"+variable+"."+forcing+"_ensemble.zonalmean.nc","w")
+    fw.write(ens)
+    fw.close()
+    return ens
 
 
 def clisccp_zonal_mean(data):
@@ -170,7 +230,7 @@ def piControl_ensemble(variable):
     prefix = "/work/cmip5/piControl/atm/mo/"
     direc = prefix+variable+"/"
     mma = cmip5.get_ensemble(direc,variable,func=piC_zonal_mean)
-    fw = cdms.open("ZonalMeanData/"+variable+".piControl_ensemble.zonalmean.nc","w")
+    fw = cdms.open("ZonalMeanData/"+variable+".piControl.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
     fw.close()
@@ -205,6 +265,14 @@ def amip_ensemble(variable):
     return mma
 
 if __name__ == "__main__":
+    import Index3 as i3
     for variable in ["pr","clt"]:
-        piControl_ensemble(variable)
-        amip_ensemble(variable)
+      historical_ensemble(variable)
+      
+      rcp85_ensemble(variable)
+      
+      for forcing in ["AA","Oz","Vl","Ant","LU","Sl"]:
+        historicalMisc_ensemble(variable,forcing)
+    i3.write_model_data("historical_ensemble",write_pr=True)
+    i3.write_model_data("rcp85_ensemble",write_pr=True)
+
