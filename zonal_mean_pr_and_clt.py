@@ -125,6 +125,7 @@ def historical_ensemble(variable):
     fw.close()
     return mma
 
+
 def rcp85_ensemble(variable):
     prefix = "/work/cmip5/rcp85/atm/mo/"
     direc = prefix+variable+"/"
@@ -136,9 +137,68 @@ def rcp85_ensemble(variable):
     return mma
 
 
+def make_splice_dictionary(historical,rcp85):
+    hmodels = eval(historical.getAxis(0).models)
+    rcp85models = eval(rcp85.getAxis(0).models)
+    get_id = lambda x: x.split(".")[1]+"."+x.split(".")[3]
+    h_id = map(get_id,hmodels)
+    r_id = map(get_id,rmodels)
+    direc = {}
+    for i in range(len(h_id)):
+        cor=np.where(np.array(r_id) == h_id[i])[0]
+        if len(cor) == 1:
+            direc[hmodels[i]] = rcp85models[cor]
+    return direc
+def check_splice_times(direc):
+    timediff = []
+    for k in sorted(direc.keys()):
+        fh = cdms.open(k)
+        fr = cdms.open(direc[k])
+        hunits = fh["clt"].getTime().units
+        rstart = fr["clt"].getTime().asComponentTime()[0]
+        hstop = fh["clt"].getTime().asComponentTime()[-1]
+        timediff += [rstart.torel(hunits).value-hstop.torel(hunits).value]
+        fh.close()
+        fr.close()
+    return timediff
+
+def splice(historical,rcp85):
+    hmodels = eval(historical.getAxis(0).models)
+    rcp85models = eval(rcp85.getAxis(0).models)
+    hi = []
+    ri = []
+    get_id = lambda x: x.split(".")[1]+"."+x.split(".")[3]
+    h_id = map(get_id,hmodels)
+    r_id = map(get_id,rmodels)
+    direc = {}
+    for i in range(len(h_id)):
+        cor=np.where(np.array(r_id) == h_id[i])[0]
+        if len(cor) == 1:
+            hi += [i]
+            ri += [int(cor)]
+    hm_good = np.array(hmodels)[hi]
+    rm_good = np.array(rcp85models)[ri]
+    L = len(hm_good)
+    splice_models = [hm_good[i]+" + "+ rm_good[i]]
+    spliceax = cdms.createAxis(np.arange(L))
+    spliceax.id = "model"
+    spliceax.models = str(splice_models)
+    historical_trunc = MV.array(historical.asma()[hi])
+    historical_trunc.setAxis(1,historical.getAxis(1))
+    historical_trunc.setAxis(2,historical.getAxis(2))
+    rcp85_trunc = MV.array(rcp85.asma()[ri])
+    rcp85_trunc.setAxis(1,rcp85.getAxis(1))
+    rcp85_trunc.setAxis(2,rcp85.getAxis(2))
+    spliced = MV.concatenate([historical_trunc,rcp85_trunc],axis=1)
+    spliced.id = "clt"
+    fw = cdms.open("ZonalMeanData/clt.historical-rcp85_ensemble.zonalmean.nc","w")
+    fw.write(spliced)
+    fw.close()
+    
+
 def historicalMisc_ensemble(variable,forcing="AA"):
     prefix = "/work/cmip5/historicalMisc/atm/mo/"
-    direc = prefix+variable+"/"
+    path = prefix+variable+"/"
     hm = cmip5.HistoricalMisc()
     search_strings = getattr(hm,forcing)
     ens = cmip5.get_ensemble(path,variable,search_string = search_strings[0],func=historical_zonal_mean)
