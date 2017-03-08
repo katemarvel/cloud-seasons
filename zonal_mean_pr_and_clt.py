@@ -4,10 +4,8 @@ import sys
 import cdms2 as cdms
 import numpy as np
 import MV2 as MV
-import difflib
-import pickle
-#import ENSO_years_piControl as en
 
+#Working remotely?
 global crunchy
 import socket
 if socket.gethostname().find("crunchy")>=0:
@@ -15,22 +13,18 @@ if socket.gethostname().find("crunchy")>=0:
 else:
     crunchy = False
 
-import peakfinder as pf
-import cdtime,cdutil,genutil
-from eofs.cdms import Eof
-from eofs.multivariate.cdms import MultivariateEof
+import cdutil,genutil
+
+### Import plotting tools
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import matplotlib.patches as patches
+
 ### Set classic Netcdf (ver 3)
 cdms.setNetcdfShuffleFlag(0)
 cdms.setNetcdfDeflateFlag(0)
 cdms.setNetcdfDeflateLevelFlag(0)
 
-
-import scipy.stats as stats
-from scipy.interpolate import interp1d
-
+### Import modules I wrote that (git repo python-utils)
 if crunchy:
     sys.path.append("/work/marvel1/python-utils")
 else:
@@ -64,7 +58,7 @@ def HadleyCell(VA):
 def OnePercentHadleyMMA():
     prefix = "/work/cmip5/1pctCO2/atm/mo/"
     direc = prefix+"va/"
-    mma = cmip5.multimodel_average(direc,"va",func=HadleyCell,verbose=True)
+    mma = cmip5.get_ensemble(direc,"va",func=HadleyCell,verbose=True)
     fw = cdms.open("ZonalMeanData/mass_streamfunction.1pctCO2.zonalmean.nc","w")
     mma.id=variable
     fw.write(mma)
@@ -72,11 +66,42 @@ def OnePercentHadleyMMA():
     return mma
 
     
+def HadleyCell_historical(VA):
+    VA = VA(time=('1860-1-1','2005-12-31'))
+    plev = VA.getLevel()[:]
+    plev_units = VA.getLevel().units
+    if plev_units == "Pa":
+        fac = 100
+    else:
+        fac = 1
+    i500 = np.where(plev/100 == 500)[0] #mid troposphere = 500hPa
+    fgrid = cdms.open("~/precip.mon.mean.nc")
+    the_grid = fgrid["precip"].getGrid()
+    data= VA.regrid(the_grid,regridTool='regrid2')
+    VAz = cdutil.averager(data,axis='x')
+    dp = np.diff(plev)
+    dp = np.append(dp,0-plev[-1]) #Top of atmosphere = pressure level 0
+    mass_streamf = MV.array(np.cumsum(VAz*dp[np.newaxis,:,np.newaxis],axis=1))[:,i500,:]
+    mass_streamf.setAxis(0,VAz.getTime())
+    mass_streamf.setAxis(1,VAz.getLatitude())
+    mass_streamf.id = "mass_streamfunction"
+    return mass_streamf
+
     
+def historicalHadleyMMA():
+    prefix = "/work/cmip5/1pctCO2/atm/mo/"
+    direc = prefix+"va/"
+    mma = cmip5.get_ensemble(direc,"va",func=HadleyCell_historical,verbose=True)
+    fw = cdms.open("ZonalMeanData/mass_streamfunction.historical.zonalmean.nc","w")
+    mma.id=variable
+    fw.write(mma)
+    fw.close()
+    return mma    
     
 
 
 def historical_rcp85_zonal_mean(x):
+    """ Function to regrid and calculate zonal mean of spliced historical-rcp85 runs """
     start = '1900-1-1'
     stop = '2100-1-1'
     fgrid = cdms.open("~/precip.mon.mean.nc")
@@ -86,13 +111,16 @@ def historical_rcp85_zonal_mean(x):
 
 
 def historical_zonal_mean(x):
+    """ Function to regrid and calculate zonal mean of historical runs """
     start = '1860-1-1'
     stop = '2006-1-1'
+    
     fgrid = cdms.open("~/precip.mon.mean.nc")
     the_grid = fgrid["precip"].getGrid()
     data = x.regrid(the_grid,regridTool='regrid2')(time=(start,stop))
     return cdutil.averager(data,axis='x')
 def rcp85_zonal_mean(x):
+    """ Function to regrid and calculate zonal mean of rcp85 runs """
     start = '2006-1-1'
     stop = '2100-1-1'
     fgrid = cdms.open("~/precip.mon.mean.nc")
@@ -325,14 +353,16 @@ def amip_ensemble(variable):
     return mma
 
 if __name__ == "__main__":
-    import Index3 as i3
-    for variable in ["pr","clt"]:
-      historical_ensemble(variable)
+    historicalHadleyMMA()
+    OnePercentHadleyMMA()
+    # import Index3 as i3
+    # for variable in ["clwvi"]:
+    #   historical_ensemble(variable)
       
-      rcp85_ensemble(variable)
+    #   rcp85_ensemble(variable)
       
-      for forcing in ["AA","Oz","Vl","Ant","LU","Sl"]:
-        historicalMisc_ensemble(variable,forcing)
-    i3.write_model_data("historical_ensemble",write_pr=True)
-    i3.write_model_data("rcp85_ensemble",write_pr=True)
+    #   #for forcing in ["AA","Oz","Vl","Ant","LU","Sl"]:
+    #    # historicalMisc_ensemble(variable,forcing)
+    # i3.write_model_data("historical_ensemble",write_pr=True)
+    # i3.write_model_data("rcp85_ensemble",write_pr=True)
 
