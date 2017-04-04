@@ -31,7 +31,7 @@ from Plotting import *
 def write_amplitude_phase(experiment,variable,search_string = "*"):
     path = "/work/cmip5/"+experiment+"/atm/mo/"+variable+"/"
     writepath = "/kate/CLT_ANNUALCYCLE/"+experiment+"/"
-    os.cmd("mkdir "+writepath)
+    os.system("mkdir "+writepath)
     #Files in the ensemble
     files = cmip5.only_most_recent(glob.glob(path+search_string))
 
