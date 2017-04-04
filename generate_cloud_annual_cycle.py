@@ -29,7 +29,7 @@ from Plotting import *
 
 
 def write_amplitude_phase(experiment,variable,search_string = "*"):
-    path = "/work/cmip5/"+1pctCO2+"/atm/mo/"+variable+"/"
+    path = "/work/cmip5/"+experiment+"/atm/mo/"+variable+"/"
     writepath = "/kate/CLT_ANNUALCYCLE/"+experiment+"/"
     os.cmd("mkdir "+writepath)
     #Files in the ensemble
