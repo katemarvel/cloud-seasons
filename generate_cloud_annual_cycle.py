@@ -1,4 +1,6 @@
+#!/usr/local/anaconda2/envs/latest/bin/python
 import glob
+import os
 import sys
 import cdms2 as cdms
 import numpy as np
@@ -28,7 +30,7 @@ import CMIP5_tools as cmip5
 from Plotting import *
 
 
-def write_amplitude_phase(experiment,variable,search_string = "*"):
+def write_amplitude_phase(experiment,variable,search_string = "*",overwrite=False):
     path = "/work/cmip5/"+experiment+"/atm/mo/"+variable+"/"
     writepath = "/kate/CLT_ANNUALCYCLE/"+experiment+"/"
     os.system("mkdir "+writepath)
@@ -41,7 +43,10 @@ def write_amplitude_phase(experiment,variable,search_string = "*"):
 
         fshort = fname.split("/")[-1]
         fwrite = fshort.replace("xml","nc")
-        fwrite = fwrite.replace(variable,variable+"_amp_phase")
+        fwrite = fwrite.replace(variable,variable+"AmpPhase")
+        if overwrite is False:
+            if fwrite in os.listdir(writepath):
+                continue
         writefile = cdms.open(writepath+fwrite,"w")
 
         R,P = sc.fast_annual_cycle(X)
@@ -86,3 +91,9 @@ def write_amplitude_phase(experiment,variable,search_string = "*"):
 
     
     
+if __name__ == '__main___':
+    experiments = ["historical","rcp85","1pctCO2","piControl"]
+    variable = "clt"
+    for experiment in experiments:
+        
+        write_amplitude_phase(experiment,variable)
