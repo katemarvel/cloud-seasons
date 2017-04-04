@@ -512,7 +512,7 @@ def get_phase_anomalies(P,historical=True):
     if historical:
         reference = stats.circmean(P(time=('1996-1-1','2009-12-31')),axis=0)
     else:
-        reference = stats.circmean(P,axis=0
+        reference = stats.circmean(P,axis=0)
     pa = np.vectorize(phase_anomaly)
     PANOM = MV.zeros(P.shape)
     if len(P.shape)==3:
