@@ -494,3 +494,37 @@ def get_variance_maps_models(variable="pr",models=None,cmip_dir = None,period=12
     VarianceMaps.setAxis(1,the_grid.getLatitude())
     return MV.masked_where(VarianceMaps>1.e10,VarianceMaps)
 
+
+
+def phase_to_day(phase):
+    """Convert phase to day of the year """
+    if phase < 0:
+        phase += 2*np.pi
+    return phase*(365./(2*np.pi))
+def phase_anomaly(phase,reference):
+    lead = phase_to_day(phase-reference)
+    lag = -1*phase_to_day(reference - phase)
+    LL = np.array([lead,lag])
+    i = np.argmin(np.abs(LL))
+    return LL[i]
+
+def get_phase_anomalies(P,historical=True):
+    if historical:
+        reference = stats.circmean(P(time=('1996-1-1','2009-12-31')),axis=0)
+    else:
+        reference = stats.circmean(P,axis=0
+    pa = np.vectorize(phase_anomaly)
+    PANOM = MV.zeros(P.shape)
+    if len(P.shape)==3:
+        nt,nlat,nlon = P.shape
+        
+        for i in range(nlat):
+            for j in range(nlon):
+                PANOM[:,i,j] = pa(P[:,i,j],reference[i,j])
+    else:
+        nt,nlat = P.shape
+        for i in range(nlat):
+            PANOM[:,i] = pa(P[:,i],reference[i])
+    PANOM.setAxisList(P.getAxisList())
+    return MV.masked_where(np.isnan(PANOM),PANOM)
+    
