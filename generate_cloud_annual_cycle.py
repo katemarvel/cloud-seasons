@@ -36,11 +36,21 @@ def write_amplitude_phase(experiment,variable,search_string = "*",overwrite=Fals
     os.system("mkdir "+writepath)
     #Files in the ensemble
     files = cmip5.only_most_recent(glob.glob(path+search_string))
-
+    bad = open("failed_files.dat","w")
     for fname in files:
         f = cdms.open(fname)
         X = f(variable)
-
+        #Need to ensure that X contains full annual cycle (HADLEY CENTER MODELS START IN DECEMBER AND ARE THE WORST BOOOOO HADLEY CENTER)
+        if cmip5.start_time(X).month != 1: #if it doesn't start in January, make it start in January
+            starttime = cdtime.comptime(cmip5.start_time(X).year+1,1,1)
+        else:
+            starttime = cmip5.start_time(X)
+        if cmip5.stop_time(X).month != 12: #if it doesn't stop in December, make it.
+            stoptime = cdtime.comptime(cmip5.stop_time(X).year-1,12,31)
+        else:
+            stoptime = cmip5.stop_time(X)
+        X = X(time=(starttime,stoptime))
+            
         fshort = fname.split("/")[-1]
         fwrite = fshort.replace("xml","nc")
         fwrite = fwrite.replace(variable,variable+"AmpPhase")
@@ -48,8 +58,12 @@ def write_amplitude_phase(experiment,variable,search_string = "*",overwrite=Fals
             if fwrite in os.listdir(writepath):
                 continue
         writefile = cdms.open(writepath+fwrite,"w")
-
-        R,P = sc.fast_annual_cycle(X)
+        try:
+            R,P = sc.fast_annual_cycle(X)
+        except:
+            bad.write(fname+"\n")
+            
+            continue
         historical = experiment.find("historical")>=0
         if historical:
             relative_to = "1996-2009"
@@ -87,11 +101,12 @@ def write_amplitude_phase(experiment,variable,search_string = "*",overwrite=Fals
         
         f.close()
         writefile.close()
+    bad.close()
     
 
     
     
-if __name__ == '__main___':
+if __name__ == "__main__":
     experiments = ["historical","rcp85","1pctCO2","piControl"]
     variable = "clt"
     for experiment in experiments:
