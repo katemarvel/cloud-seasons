@@ -60,7 +60,7 @@ def write_amplitude_phase(experiment,variable,search_string = "*",overwrite=Fals
                     continue
             writefile = cdms.open(writepath+fwrite,"w")
 
-                R,P = sc.fast_annual_cycle(X)
+            R,P = sc.fast_annual_cycle(X)
 
             historical = experiment.find("historical")>=0
             if historical:
