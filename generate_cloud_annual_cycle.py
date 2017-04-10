@@ -104,9 +104,45 @@ def write_amplitude_phase(experiment,variable,search_string = "*",overwrite=Fals
             
             continue
     bad.close()
-    
 
-    
+def variance_map(X):
+    f = cdms.open("CLOUD_OBS/clt_ISCCP_corrected_198301-200912.nc")
+    obs_grid = f["clt"].getGrid()
+    test = X.regrid(obs_grid,regridTool='regrid2')
+    f.close()
+    return sc.variance_map(test)
+            
+def make_variance_maps():
+    variable="clt"
+    experiment = "historical"
+    path = "/work/cmip5/"+experiment+"/atm/mo/"+variable+"/"
+    search_string = "*r1i*"
+    files = cmip5.only_most_recent(glob.glob(path+search_string))
+    #Get shape
+    L = len(files)
+    fil = files[0]
+    fo = cdms.open(fil)
+    X = fo(variable)(time=('1996-1-1','2005-12-31'))
+    V = variance_map(X)
+    BIGV = MV.zeros((L,)+V.shape)
+    i=0
+    BIGV[i]=V
+    i+=1
+    for fil in files[1:]:
+        fo = cdms.open(fil)
+        X = fo(variable)(time=('1996-1-1','2005-12-31'))
+        V = variance_map(X)
+        BIGV[i]=V
+        i+=1
+    modax = cmip5.make_model_axis(files)
+    BIGV.setAxis(modax)
+    BIGV.setAxis(1,V.getAxis(0))
+    BIGV.setAxis(2,V.getAxis(1))
+    BIGV.id = "var_expl"
+    fw = cdms.open("/kate/CLT_ANNUALCYCLE/variance_maps/regridded_variance_maps.nc","w")
+    fw.write(BIGV)
+    fw.close()
+   
     
 if __name__ == "__main__":
     experiments = ["piControl","rcp85","1pctCO2"]
