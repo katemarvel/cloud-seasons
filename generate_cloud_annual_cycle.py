@@ -142,6 +142,7 @@ def make_variance_maps():
     fw = cdms.open("/kate/CLT_ANNUALCYCLE/variance_maps/regridded_variance_maps.nc","w")
     fw.write(BIGV)
     fw.close()
+    return BIGV
    
     
 if __name__ == "__main__":
