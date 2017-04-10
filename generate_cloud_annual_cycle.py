@@ -135,7 +135,7 @@ def make_variance_maps():
         BIGV[i]=V
         i+=1
     modax = cmip5.make_model_axis(files)
-    BIGV.setAxis(modax)
+    BIGV.setAxis(0,modax)
     BIGV.setAxis(1,V.getAxis(0))
     BIGV.setAxis(2,V.getAxis(1))
     BIGV.id = "var_expl"
