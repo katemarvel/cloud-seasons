@@ -1,8 +1,36 @@
+#!/usr/local/anaconda2/envs/latest/bin/python
+import glob
+import sys
+import cdms2 as cdms
+import numpy as np
+import MV2 as MV
+
+#Working remotely?
+global crunchy
+import socket
+if socket.gethostname().find("crunchy")>=0:
+    crunchy = True
+else:
+    crunchy = False
+
+import cdutil,genutil
+
+### Import plotting tools
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 ### Set classic Netcdf (ver 3)
 cdms.setNetcdfShuffleFlag(0)
 cdms.setNetcdfDeflateFlag(0)
 cdms.setNetcdfDeflateLevelFlag(0)
+
+### Import modules I wrote that (git repo python-utils)
+if crunchy:
+    sys.path.append("/work/marvel1/python-utils")
+else:
+    sys.path.append("~/Google Drive/python-utils")
+from Plotting import *
+import CMIP5_tools as cmip5
 
 def low_mid_high(fname):
     fgrid = cdms.open("~/precip.mon.mean.nc")
