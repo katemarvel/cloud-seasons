@@ -59,20 +59,23 @@ def low_mid_high(fname):
 
 def write_all_low_mid_high(experiment):    
     sorted_files = sorted(cmip5.get_datafiles(experiment,"clisccp"))
-    for fname in sorted_files:
+    for fname in sorted_files[0:1]:
         try:
             low,mid,high = low_mid_high(fname)
             trunc_fname = fname.split("/")[-1]
-
-            writename_low = "/kate/CLISCCP/LOW/"+trunc_fname.replace("clisccp","low").replace(".xml",".nc")
+            
+            os.system("mkdir "+ "/kate/CLISCCP/LOW/"+experiment+"/")
+            writename_low = "/kate/CLISCCP/LOW/"+experiment+"/"+trunc_fname.replace("clisccp","low").replace(".xml",".nc")
             flow = cdms.open(writename_low,"w")
             flow.write(low)
-
-            writename_mid = "/kate/CLISCCP/MID/"+trunc_fname.replace("clisccp","mid").replace(".xml",".nc")
+            
+            os.system("mkdir "+ "/kate/CLISCCP/LOW/"+experiment+"/")
+            writename_mid = "/kate/CLISCCP/MID/"+experiment+"/"+trunc_fname.replace("clisccp","mid").replace(".xml",".nc")
             fmid = cdms.open(writename_mid,"w")
             fmid.write(mid)
 
-            writename_high = "/kate/CLISCCP/HIGH/"+trunc_fname.replace("clisccp","high").replace(".xml",".nc")
+            os.system("mkdir "+ "/kate/CLISCCP/LOW/"+experiment+"/")
+            writename_high = "/kate/CLISCCP/HIGH/"+experiment+"/"+trunc_fname.replace("clisccp","high").replace(".xml",".nc")
             fhigh = cdms.open(writename_high,"w")
             fhigh.write(high)
         except:
