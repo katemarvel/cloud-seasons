@@ -60,21 +60,26 @@ def low_mid_high(fname):
 def write_all_low_mid_high(experiment):    
     sorted_files = sorted(cmip5.get_datafiles(experiment,"clisccp"))
     for fname in sorted_files:
+        try:
+            low,mid,high = low_mid_high(fname)
+            trunc_fname = fname.split("/")[-1]
 
-        low,mid,high = low_mid_high(fname)
-        trunc_fname = fname.split("/")[-1]
+            writename_low = "/kate/CLISCCP/LOW/"+trunc_fname.replace("clisccp","low").replace(".xml",".nc")
+            flow = cdms.open(writename_low,"w")
+            flow.write(low)
 
-        writename_low = "/kate/CLISCCP/LOW/"+trunc_fname.replace("clisccp","low").replace(".xml",".nc")
-        flow = cdms.open(writename_low,"w")
-        flow.write(low)
+            writename_mid = "/kate/CLISCCP/MID/"+trunc_fname.replace("clisccp","mid").replace(".xml",".nc")
+            fmid = cdms.open(writename_mid,"w")
+            fmid.write(mid)
 
-        writename_mid = "/kate/CLISCCP/MID/"+trunc_fname.replace("clisccp","mid").replace(".xml",".nc")
-        fmid = cdms.open(writename_mid,"w")
-        fmid.write(mid)
-
-        writename_high = "/kate/CLISCCP/HIGH/"+trunc_fname.replace("clisccp","high").replace(".xml",".nc")
-        fhigh = cdms.open(writename_high,"w")
-        fhigh.write(high)
+            writename_high = "/kate/CLISCCP/HIGH/"+trunc_fname.replace("clisccp","high").replace(".xml",".nc")
+            fhigh = cdms.open(writename_high,"w")
+            fhigh.write(high)
+        except:
+            print "*****************"
+            print fname+" IS BAD"
+            print "*****************"
+            
 
 if __name__ == "__main__":
     experiments = ["piControl","historical","1pctCO2","amip"]
