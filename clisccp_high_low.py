@@ -96,11 +96,23 @@ def zonal_mean_mma(height,experiment):
         truncate = lambda x: cdutil.averager(x(time=(start,stop)),axis='x')
     else:
         truncate = lambda x: cdutil.averager(x[:common_time],axis='x')
-    return cmip5.get_ensemble(direc,lower(height)+"_clt",search_string=search_string,func=truncate)
+    X = cmip5.get_ensemble(direc,lower(height)+"_clt",search_string=search_string,func=truncate)
+    X.id=height+"_clt"
+    return X
             
-def write_cloud_hight_files():
+def write_cloud_height_files():
     experiments = ["piControl","historical","1pctCO2","amip"]
     for experiment in experiments:
         write_all_low_mid_high(experiment)
 if __name__ == "__main__":
-    pass
+    experiments = ["piControl","historical","1pctCO2","amip"]
+   
+    for height in ["low","mid","high"]:
+        os.system("mkdir "+"/kate/CLISCCP/"+upper(height)+"/ZONAL/")
+        for experiment in experiments:
+            fname = "/kate/CLISCCP/"+upper(height)+"/ZONAL/cmip5.MMA."+experiment+".r1i1p1.mo.atm.cfMon."+height+"_ZONALMEAN.ver-1.nc"
+            fw = cdms.open(fname,"w")
+            X = zonal_mean_mma(height,experiment)
+            fw.write(X)
+            fw.close()
+            
