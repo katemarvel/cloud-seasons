@@ -4,7 +4,7 @@ import sys
 import cdms2 as cdms
 import numpy as np
 import MV2 as MV
-
+from string import upper,lower
 #Working remotely?
 global crunchy
 import socket
@@ -84,7 +84,23 @@ def write_all_low_mid_high(experiment):
             print "*****************"
             
 
-if __name__ == "__main__":
+
+def zonal_mean_mma(height,experiment):
+            
+    direc = '/kate/CLISCCP/'+upper(height)+'/'
+    search_string = "*"+experiment+"*"
+    fnames = cmip5.get_datafiles(experiment,"clisccp")
+    common_time = cmip5.get_common_timeax(fnames)
+    if type(common_time) ==type(()):
+        start,stop=common_time
+        truncate = lambda x: cdutil.averager(x(time=(start,stop)),axis='x')
+    else:
+        truncate = lambda x: cdutil.averager(x[:common_time],axis='x')
+    return cmip5.get_ensemble(direc,lower(height)+"_clt",search_string=search_string,func=truncate)
+            
+def write_cloud_hight_files():
     experiments = ["piControl","historical","1pctCO2","amip"]
     for experiment in experiments:
         write_all_low_mid_high(experiment)
+if __name__ == "__main__":
+    pass
