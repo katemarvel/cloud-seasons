@@ -74,5 +74,14 @@ def write_1pctCO2_cloud():
     direc = "/kate/cl_regrid_isccp/1pctCO2/XML/"
     search_string = "*r1*xml"
     HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud)
+    HIGH.id="high_clt"
+    fh = cdms.open("cmip5.1pctCO2.ensemble.high_clt.nc","w")
+    fh.write(HIGH)
+    fh.close()
+    
     LOW = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=low_cloud)
+    LOW.id="low_mid_clt"
+    fl = cdms.open("cmip5.1pctCO2.ensemble.lowmid_clt.nc","w")
+    fl.write(LOW)
+    fh.close()
     return HIGH,LOW
