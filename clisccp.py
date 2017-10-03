@@ -30,7 +30,7 @@ import DA_tools
 import peakfinder
 import obs_trends_seasonal_high_low as ot
 
-def low_cloud(clisccp,thresh=440):
+def low_cloud(clisccp,thresh=440,nyears=200):
  
     axes = clisccp.getAxisIds()
 
@@ -39,7 +39,7 @@ def low_cloud(clisccp,thresh=440):
     plev_ax = clisccp.getAxisIds().index("plev")
     low = MV.sum(clisccp(level=(1000*100,thresh*100)),axis=plev_ax)#(time=('1979-1-1','2005-12-31'))
     cdutil.setTimeBoundsMonthly(low)
-    annual_cycle_removed= cdutil.ANNUALCYCLE.departures(low)[0:140*12]
+    annual_cycle_removed= cdutil.ANNUALCYCLE.departures(low)[0:nyears*12]
  
     if crunchy:
         fobs = cdms.open("/work/marvel1/CLOUD_SEASONS/cloud-seasons/CLOUD_OBS/clt_ISCCP_corrected_198301-200912.nc")
@@ -50,7 +50,7 @@ def low_cloud(clisccp,thresh=440):
     fobs.close()
     return annual_cycle_removed_regrid
 
-def high_cloud(clisccp,thresh=440):
+def high_cloud(clisccp,thresh=440,nyears=200):
  
     axes = clisccp.getAxisIds()
 
@@ -59,7 +59,7 @@ def high_cloud(clisccp,thresh=440):
     plev_ax = clisccp.getAxisIds().index("plev")
     high = MV.sum(clisccp(level=(thresh*100,0)),axis=plev_ax)#(time=('1979-1-1','2005-12-31'))
     cdutil.setTimeBoundsMonthly(high)
-    annual_cycle_removed= cdutil.ANNUALCYCLE.departures(high)[0:140*12]
+    annual_cycle_removed= cdutil.ANNUALCYCLE.departures(high)[0:nyears*12]
  
     if crunchy:
         fobs = cdms.open("/work/marvel1/CLOUD_SEASONS/cloud-seasons/CLOUD_OBS/clt_ISCCP_corrected_198301-200912.nc")
@@ -83,5 +83,21 @@ def write_1pctCO2_cloud():
     LOW.id="low_mid_clt"
     fl = cdms.open("cmip5.1pctCO2.ensemble.lowmid_clt.nc","w")
     fl.write(LOW)
+    fl.close()
+    return HIGH,LOW
+
+def write_piControl_cloud():
+    direc = "/kate/cl_regrid_isccp/piControl/XML/"
+    search_string = "*r1*xml"
+    HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud)
+    HIGH.id="high_clt"
+    fh = cdms.open("cmip5.piControl.ensemble.high_clt.nc","w")
+    fh.write(HIGH)
     fh.close()
+    
+    LOW = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=low_cloud)
+    LOW.id="low_mid_clt"
+    fl = cdms.open("cmip5.piControl.ensemble.lowmid_clt.nc","w")
+    fl.write(LOW)
+    fl.close()
     return HIGH,LOW
