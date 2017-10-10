@@ -1,3 +1,4 @@
+#!/usr/local/anaconda2/envs/latest/bin/python
 import glob
 import sys
 import cdms2 as cdms
@@ -90,21 +91,23 @@ def write_1pctCO2_cloud():
     fl.close()
     return HIGH,LOW
 
-def write_piControl_cloud():
+def write_piControl_cloud(high=False):
     direc = "/kate/cl_regrid_isccp/piControl/XML/"
     search_string = "*r1*xml"
-    HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud)
-    HIGH.id="high_clt"
-    fh = cdms.open("cmip5.piControl.ensemble.high_clt.nc","w")
-    fh.write(HIGH)
-    fh.close()
+
+    if high:
+        HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud)
+        HIGH.id="high_clt"
+        fh = cdms.open("cmip5.piControl.ensemble.high_clt.nc","w")
+        fh.write(HIGH)
+        fh.close()
     
     LOW = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=low_cloud)
     LOW.id="low_mid_clt"
     fl = cdms.open("cmip5.piControl.ensemble.lowmid_clt.nc","w")
     fl.write(LOW)
     fl.close()
-    return HIGH,LOW
+    #return HIGH,LOW
 
 
 
@@ -183,7 +186,7 @@ def write_Nat_cloud():
     #return HIGH,LOW
 
 if __name__ == "__main__":
-    HIGH_piC,LOW_piC= write_piControl_cloud()
+    write_piControl_cloud(high=False)
     write_Nat_cloud()
     write_historical_cloud()
     
