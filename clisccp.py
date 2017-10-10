@@ -156,13 +156,13 @@ def high_cloud_historical(clisccp,thresh=440,start='1983-7-1',stop='2005-12-31')
 def write_historical_cloud():
     direc = "/kate/cl_regrid_isccp/historical-rcp85/XML/"
     search_string = "*r1*xml"
-    HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud,stop='2099-12-31')
+    HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud_historical,stop='2099-12-31')
     HIGH.id="high_clt"
     fh = cdms.open("cmip5.historical-rcp85.ensemble.high_clt.nc","w")
     fh.write(HIGH)
     fh.close()
     
-    LOW = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=low_cloud,stop='2099-12-31')
+    LOW = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=low_cloud_historical,stop='2099-12-31')
     LOW.id="low_mid_clt"
     fl = cdms.open("cmip5.historical-rcp85.ensemble.lowmid_clt.nc","w")
     fl.write(LOW)
@@ -172,13 +172,13 @@ def write_historical_cloud():
 def write_Nat_cloud():
     direc = "/kate/cl_regrid_isccp/historicalNat/XML/"
     search_string = "*r1*xml"
-    HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud,stop='2099-12-31')
+    HIGH = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=high_cloud_historical,stop='2005-12-31')
     HIGH.id="high_clt"
     fh = cdms.open("cmip5.historicalNat.ensemble.high_clt.nc","w")
     fh.write(HIGH)
     fh.close()
     
-    LOW = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=low_cloud,stop='2099-12-31')
+    LOW = cmip5.get_ensemble(direc,"pgrid_cl",search_string=search_string,func=low_cloud_historical,stop='2005-12-31')
     LOW.id="low_mid_clt"
     fl = cdms.open("cmip5.historicalNat.ensemble.lowmid_clt.nc","w")
     fl.write(LOW)
@@ -186,7 +186,7 @@ def write_Nat_cloud():
     #return HIGH,LOW
 
 if __name__ == "__main__":
-    write_piControl_cloud(high=False)
+    #write_piControl_cloud(high=False)
     write_Nat_cloud()
     write_historical_cloud()
     
