@@ -46,7 +46,7 @@ def regrid_cloud(C):
         fobs = cdms.open("/work/marvel1/CLOUD_SEASONS/cloud-seasons/CLOUD_OBS/clt_ISCCP_corrected_198301-200912.nc")
     else:
         fobs = cdms.open("/Users/kmarvel/Google Drive/CLOUD_SEASONS/cloud-seasons/CLOUD_OBS/clt_ISCCP_corrected_198301-200912.nc")
-    the_grid = fobs["clt"].getGrid()
+    the_grid = fobs("clt").getGrid()
     Cnew = MV.zeros(Call.shape[:2]+the_grid.shape)
     for i in range(7):
         Cold = Call[:,i,:,:]
@@ -61,23 +61,24 @@ def regrid_cloud(C):
     Cnew.id = C.id
     return Cnew
 if __name__ == "__main__":
-    abrupt = cmip5.get_datafiles("abrupt4xCO2","clisccp")
-    abrupt_r1 = np.array(abrupt)[np.where(np.array([x.find("r1i")>=0 for x  in abrupt]))]
+    abrupt_files = cmip5.get_datafiles("abrupt4xCO2","clisccp")
+    abrupt_r1 = np.array(abrupt_files)[np.where(np.array([x.find("r1i")>=0 for x  in abrupt_files]))]
 
     for fname in abrupt_r1:
-        writename = 'Regridded112017/abrupt4xCO2/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/Regridded112017/abrupt4xCO2/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
         Cnew = regrid_cloud(C)
-        f.close()
+        
         fwrite.write(Cnew)
+        f.close()
         fwrite.close()
 
     piC = cmip5.get_datafiles("piControl","clisccp")
 
     for fname in piC:
-        writename = 'Regridded112017/piControl/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/Regridded112017/piControl/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     historical = cmip5.get_datafiles("historical","clisccp")
     historical_no_ipsl = np.array(historical)[np.where(np.array([x.find("IPSL")<0 for x in historical]))]
     for fname in historical_no_ipsl:
-        writename = 'Regridded112017/historical/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/Regridded112017/historical/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     OnePct = cmip5.get_datafiles("1pctCO2","clisccp")
     OnePct_no_ipsl = np.array(OnePct)[np.where(np.array([x.find("IPSL")<0 for x in OnePct]))]
     for fname in OnePct_no_ipsl:
-        writename = 'Regridded112017/1pctCO2/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/Regridded112017/1pctCO2/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
