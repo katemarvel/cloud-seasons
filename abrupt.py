@@ -46,7 +46,8 @@ def regrid_cloud(C):
         fobs = cdms.open("/work/marvel1/CLOUD_SEASONS/cloud-seasons/CLOUD_OBS/clt_ISCCP_corrected_198301-200912.nc")
     else:
         fobs = cdms.open("/Users/kmarvel/Google Drive/CLOUD_SEASONS/cloud-seasons/CLOUD_OBS/clt_ISCCP_corrected_198301-200912.nc")
-    the_grid = fobs("clt").getGrid()
+    obs_clt = fobs("clt")
+    the_grid = obs_clt.getGrid()
     Cnew = MV.zeros(Call.shape[:2]+the_grid.shape)
     for i in range(7):
         Cold = Call[:,i,:,:]
