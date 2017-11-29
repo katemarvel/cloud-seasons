@@ -210,7 +210,7 @@ def abrupt_allfiles():
         i+=1
     AC.setAxis(0,cmip5.make_model_axis(ab_no_ipsl))
     for axi in range(4)[1:]:
-        AC.setAxis(i,C.getAxis(i-1))
+        AC.setAxis(axi,C.getAxis(axi-1))
     return AC
     
     
