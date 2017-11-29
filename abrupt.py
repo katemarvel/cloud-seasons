@@ -61,7 +61,7 @@ def regrid_cloud(C):
     fobs.close()
     Cnew.id = C.id
     return Cnew
-if __name__ == "__main__":
+def write_data():
     abrupt_files = cmip5.get_datafiles("abrupt4xCO2","clisccp")
     abrupt_r1 = np.array(abrupt_files)[np.where(np.array([x.find("r1i")>=0 for x  in abrupt_files]))]
 
@@ -113,3 +113,89 @@ if __name__ == "__main__":
         fwrite.write(Cnew)
         fwrite.close()
 
+def low_cloud(C):
+    plev_ax =C.getAxisIds().index("plev")
+    return MV.sum(C(level=(1000*100,680*100)),axis=plev_ax)
+def mid_cloud(C):
+    plev_ax =C.getAxisIds().index("plev")
+    return MV.sum(C(level=(680*100,440*100)),axis=plev_ax)
+def high_cloud(C):
+    plev_ax =C.getAxisIds().index("plev")
+    return MV.sum(C(level=(440*100,0)),axis=plev_ax)
+
+def abrupt_changes(C):
+    start = cmip5.start_time(C)
+    start20 = start.add(20,cdtime.Years)
+    hundred = start20.add(100,cdtime.Years)
+    stop = hundred.add(20,cdtime.Years)
+
+    first20 = MV.average(C(time=(start,start20)),axis=0)
+    last20 = MV.average(C(time=(hundred,stop)),axis=0)
+    return last20-first20
+
+
+def hist_ensembles():
+    hist=sorted(glob.glob("/kate/Regridded112017/historical/*"))
+    hist_no_had=[hist[0]]+hist[2:]
+    start,stop=cmip5.get_common_timeax(hist_no_had)
+    Nmod = len(hist_no_had)
+    i=0
+    fname = hist_no_had[i]
+    f = cdms.open(fname)
+    C=f("clisccp",time=(start,stop))
+    f.close()
+    low_0 = low_cloud(C)
+    mid_0 = mid_cloud(C)
+    high_0 = high_cloud(C)
+    ### Initialise arrays
+    LOW = MV.zeros((Nmod,)+low_0.shape)
+    MID = MV.zeros((Nmod,)+mid_0.shape)
+    HIGH = MV.zeros((Nmod,)+high_0.shape)
+    ###
+    LOW[i]=low_0
+    MID[i]=mid_0
+    HIGH[i]=high_0
+    for i in range(len(hist_no_had))[1:]:
+        fname = hist_no_had[i]
+        f = cdms.open(fname)
+        C=f("clisccp",time=(start,stop))
+        f.close()
+        low_i = low_cloud(C)
+        mid_i = mid_cloud(C)
+        high_i = high_cloud(C)
+    
+        LOW[i]=low_i
+        MID[i]=mid_i
+        HIGH[i]=high_i
+    modax = cmip5.make_model_axis(hist_no_had)
+    LOW.id = "low_clt"
+    LOW.setAxis(0,modax)
+    LOW.setAxis(1,low_0.getTime())
+    LOW.setAxis(2,low_0.getLatitude())
+    LOW.setAxis(3,low_0.getLongitude())
+
+    MID.id = "mid_clt"
+    MID.setAxis(0,modax)
+    MID.setAxis(1,mid_0.getTime())
+    MID.setAxis(2,mid_0.getLatitude())
+    MID.setAxis(3,mid_0.getLongitude())
+
+    HIGH.id = "high_clt"
+    HIGH.setAxis(0,modax)
+    HIGH.setAxis(1,high_0.getTime())
+    HIGH.setAxis(2,high_0.getLatitude())
+    HIGH.setAxis(3,high_0.getLongitude())
+
+    fwrite = cdms.open("/kate/Regridded112017/MMA/cmip5.MMA.historical.r1i1p1.mo.atm.cfMon.clisccp.ver-1.latestX.nc","w")
+    fwrite.write(LOW)
+    fwrite.write(MID)
+    fwrite.write(HIGH)
+    fwrite.close()
+    return LOW,MID,HIGH
+    
+    
+    
+    
+    
+    
+    
