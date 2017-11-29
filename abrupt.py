@@ -195,7 +195,23 @@ def hist_ensembles():
     
     
     
-    
+def abrupt_allfiles():
+    ab=sorted(glob.glob("/kate/Regridded112017/abrupt4xCO2/*"))
+    ab_no_ipsl=ab[:2]+ab[4:]
+    Nmod = len(ab_no_ipsl)
+    AC = MV.zeros((Nmod,)+(7,72,144))
+    i=0
+    for fname in ab_no_ipsl:
+        f=cdms.open(fname)
+        C=f("clisccp")
+        test = abrupt_changes(C)
+        AC[i]=test
+        f.close()
+        i+=1
+    AC.setAxis(0,cmip5.make_model_axis(ab_no_ipsl))
+    for axi in range(4)[1:]:
+        AC.setAxis(i,C.getAxis(i-1))
+    return AC
     
     
     
