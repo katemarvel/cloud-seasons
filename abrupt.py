@@ -37,8 +37,8 @@ def regrid_cloud(C):
 
  
  
-    plev_ax = C.getAxisIds().index("plev")
-    Call = MV.sum(C,axis=plev_ax)#(time=('1979-1-1','2005-12-31'))
+    tau_ax = C.getAxisIds().index("tau")
+    Call = MV.sum(C,axis=tau_ax)#(time=('1979-1-1','2005-12-31'))
    # cdutil.setTimeBoundsMonthly(Call)
    
  
@@ -115,13 +115,19 @@ def write_data():
 
 def low_cloud(C):
     plev_ax =C.getAxisIds().index("plev")
-    return MV.sum(C(level=(1000*100,680*100)),axis=plev_ax)
+    low = MV.sum(C(level=(1000*100,680*100)),axis=plev_ax)
+    low.id = "low_clt"
+    return low
 def mid_cloud(C):
     plev_ax =C.getAxisIds().index("plev")
-    return MV.sum(C(level=(680*100,440*100)),axis=plev_ax)
+    mid = MV.sum(C(level=(680*100,440*100)),axis=plev_ax)
+    mid.id = "mid_clt"
+    return mid
 def high_cloud(C):
     plev_ax =C.getAxisIds().index("plev")
-    return MV.sum(C(level=(440*100,0)),axis=plev_ax)
+    high = MV.sum(C(level=(440*100,0)),axis=plev_ax)
+    high.id="high_clt"
+    return high
 
 def abrupt_changes(C):
     start = cmip5.start_time(C)
@@ -210,8 +216,26 @@ def abrupt_allfiles():
         i+=1
     AC.setAxis(0,cmip5.make_model_axis(ab_no_ipsl))
     for axi in range(4)[1:]:
-        AC.setAxis(axi,C.getAxis(axi-1))
+        AC.setAxis(axi,C.getAxis(axi))
     return AC
     
     
     
+def write_zonal(experiment):
+    thefiles = sorted(glob.glob("/kate/Regridded112017/"+experiment+"/cmip5.*"))
+    writedir = "/kate/Regridded112017/ZONAL/"+experiment+"/"
+    for fil in thefiles:
+        if fil.find("IPSL")<0:
+            f = cdms.open(fil)
+            C = f("clisccp")
+            Cz = cdutil.averager(C,axis='x')
+            high = high_cloud(Cz)
+            mid = mid_cloud(Cz)
+            low = low_cloud(Cz)
+            fw = cdms.open(writedir+fil.split("/")[-1],"w")
+            fw.write(high)
+            fw.write(mid)
+            fw.write(low)
+            fw.close()
+            f.close()
+        
