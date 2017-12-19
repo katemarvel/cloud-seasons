@@ -66,7 +66,7 @@ def write_data():
     abrupt_r1 = np.array(abrupt_files)[np.where(np.array([x.find("r1i")>=0 for x  in abrupt_files]))]
 
     for fname in abrupt_r1:
-        writename = '/kate/Regridded112017/abrupt4xCO2/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/RegriddedDECEMBER2017/abrupt4xCO2/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
@@ -79,7 +79,7 @@ def write_data():
     piC = cmip5.get_datafiles("piControl","clisccp")
 
     for fname in piC:
-        writename = '/kate/Regridded112017/piControl/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/RegriddedDECEMBER2017/piControl/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
@@ -92,7 +92,7 @@ def write_data():
     historical = cmip5.get_datafiles("historical","clisccp")
     historical_no_ipsl = np.array(historical)[np.where(np.array([x.find("IPSL")<0 for x in historical]))]
     for fname in historical_no_ipsl:
-        writename = '/kate/Regridded112017/historical/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/RegriddedDECEMBER2017/historical/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
@@ -104,7 +104,7 @@ def write_data():
     OnePct = cmip5.get_datafiles("1pctCO2","clisccp")
     OnePct_no_ipsl = np.array(OnePct)[np.where(np.array([x.find("IPSL")<0 for x in OnePct]))]
     for fname in OnePct_no_ipsl:
-        writename = '/kate/Regridded112017/1pctCO2/'+fname.split("/")[-1].replace("xml","nc")
+        writename = '/kate/RegriddedDECEMBER2017/1pctCO2/'+fname.split("/")[-1].replace("xml","nc")
         fwrite = cdms.open(writename,"w")
         f = cdms.open(fname)
         C = f("clisccp")
@@ -141,7 +141,7 @@ def abrupt_changes(C):
 
 
 def hist_ensembles():
-    hist=sorted(glob.glob("/kate/Regridded112017/historical/*"))
+    hist=sorted(glob.glob("/kate/RegriddedDECEMBER2017/historical/*"))
     hist_no_had=[hist[0]]+hist[2:]
     start,stop=cmip5.get_common_timeax(hist_no_had)
     Nmod = len(hist_no_had)
@@ -192,7 +192,7 @@ def hist_ensembles():
     HIGH.setAxis(2,high_0.getLatitude())
     HIGH.setAxis(3,high_0.getLongitude())
 
-    fwrite = cdms.open("/kate/Regridded112017/MMA/cmip5.MMA.historical.r1i1p1.mo.atm.cfMon.clisccp.ver-1.latestX.nc","w")
+    fwrite = cdms.open("/kate/RegriddedDECEMBER2017/MMA/cmip5.MMA.historical.r1i1p1.mo.atm.cfMon.clisccp.ver-1.latestX.nc","w")
     fwrite.write(LOW)
     fwrite.write(MID)
     fwrite.write(HIGH)
@@ -202,7 +202,7 @@ def hist_ensembles():
     
     
 def abrupt_allfiles():
-    ab=sorted(glob.glob("/kate/Regridded112017/abrupt4xCO2/*"))
+    ab=sorted(glob.glob("/kate/RegriddedDECEMBER2017/abrupt4xCO2/*"))
     ab_no_ipsl=ab[:2]+ab[4:]
     Nmod = len(ab_no_ipsl)
     AC = MV.zeros((Nmod,)+(7,72,144))
@@ -222,8 +222,8 @@ def abrupt_allfiles():
     
     
 def write_zonal(experiment):
-    thefiles = sorted(glob.glob("/kate/Regridded112017/"+experiment+"/cmip5.*"))
-    writedir = "/kate/Regridded112017/ZONAL/"+experiment+"/"
+    thefiles = sorted(glob.glob("/kate/RegriddedDECEMBER2017/"+experiment+"/cmip5.*"))
+    writedir = "/kate/RegriddedDECEMBER2017/ZONAL/"+experiment+"/"
     for fil in thefiles:
         if fil.find("IPSL")<0:
             f = cdms.open(fil)
@@ -239,3 +239,7 @@ def write_zonal(experiment):
             fw.close()
             f.close()
         
+if __name__=="__main__":
+    write_data()
+    for experiment in ["piControl","historical","1pctCO2","abrupt4xCO2"]:
+        write_zonal(experiment)
